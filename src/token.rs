@@ -4,7 +4,7 @@ use crate::token_type::TokenType;
 pub struct Token {
     pub token_type: TokenType,
     pub lexeme: String,
-    pub literal: (), // idk what this is supposed to be yet, Box<dyn Any> cannot be Clone.
+    pub literal: Option<String>, // idk what this is supposed to be yet, Box<dyn Any> cannot be Clone.
     pub line: usize,
 }
 

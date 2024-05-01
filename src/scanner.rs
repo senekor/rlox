@@ -28,7 +28,7 @@ impl Scanner {
         self.tokens.push(Token {
             token_type: T::Eof,
             lexeme: "".into(),
-            literal: (),
+            literal: None,
             line: self.line,
         });
         self.tokens.clone()
@@ -37,23 +37,23 @@ impl Scanner {
     fn scan_token(&mut self) {
         let c = self.advance();
         match c {
-            '(' => self.add_token(T::LeftParen, ()),
-            ')' => self.add_token(T::RightParen, ()),
-            '{' => self.add_token(T::LeftBrace, ()),
-            '}' => self.add_token(T::RightBrace, ()),
-            ',' => self.add_token(T::Comma, ()),
-            '.' => self.add_token(T::Dot, ()),
-            '-' => self.add_token(T::Minus, ()),
-            '+' => self.add_token(T::Plus, ()),
-            ';' => self.add_token(T::Semicolon, ()),
-            '*' => self.add_token(T::Star, ()),
+            '(' => self.add_token(T::LeftParen, None),
+            ')' => self.add_token(T::RightParen, None),
+            '{' => self.add_token(T::LeftBrace, None),
+            '}' => self.add_token(T::RightBrace, None),
+            ',' => self.add_token(T::Comma, None),
+            '.' => self.add_token(T::Dot, None),
+            '-' => self.add_token(T::Minus, None),
+            '+' => self.add_token(T::Plus, None),
+            ';' => self.add_token(T::Semicolon, None),
+            '*' => self.add_token(T::Star, None),
             '!' => {
                 let token = if self.match_char('=') {
                     T::BangEqual
                 } else {
                     T::Bang
                 };
-                self.add_token(token, ())
+                self.add_token(token, None)
             }
             '=' => {
                 let token = if self.match_char('=') {
@@ -61,7 +61,7 @@ impl Scanner {
                 } else {
                     T::Equal
                 };
-                self.add_token(token, ())
+                self.add_token(token, None)
             }
             '<' => {
                 let token = if self.match_char('=') {
@@ -69,7 +69,7 @@ impl Scanner {
                 } else {
                     T::Less
                 };
-                self.add_token(token, ())
+                self.add_token(token, None)
             }
             '>' => {
                 let token = if self.match_char('=') {
@@ -77,7 +77,7 @@ impl Scanner {
                 } else {
                     T::Greater
                 };
-                self.add_token(token, ())
+                self.add_token(token, None)
             }
             '/' => {
                 if self.match_char('/') {
@@ -86,11 +86,12 @@ impl Scanner {
                         self.advance();
                     }
                 } else {
-                    self.add_token(T::Slash, ());
+                    self.add_token(T::Slash, None);
                 }
             }
             ' ' | '\r' | '\t' => {}
             '\n' => self.line += 1,
+            '"' => self.string(),
             _ => error(self.line, "Unexpected character.".into()),
         }
     }
@@ -105,7 +106,7 @@ impl Scanner {
         res
     }
 
-    fn add_token(&mut self, token_type: T, literal: ()) {
+    fn add_token(&mut self, token_type: T, literal: Option<String>) {
         let text: String = self.source[self.start..self.current].into();
         self.tokens.push(Token {
             token_type,
@@ -131,5 +132,26 @@ impl Scanner {
             return '\0';
         }
         self.source.chars().nth(self.current).unwrap()
+    }
+
+    fn string(&mut self) {
+        while self.peek() != '"' && !self.is_at_end() {
+            if self.peek() == '\n' {
+                self.line += 1
+            };
+            self.advance();
+        }
+
+        if self.is_at_end() {
+            error(self.line, "Unterminated string.".into());
+            return;
+        }
+
+        // The closing ".
+        self.advance();
+
+        // Trim the surrounding quotes.
+        let value = self.source[self.start + 1..self.current - 1].into();
+        self.add_token(T::String, Some(value));
     }
 }
