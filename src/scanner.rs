@@ -47,6 +47,38 @@ impl Scanner {
             '+' => self.add_token(T::Plus, ()),
             ';' => self.add_token(T::Semicolon, ()),
             '*' => self.add_token(T::Star, ()),
+            '!' => {
+                let token = if self.match_char('=') {
+                    T::BangEqual
+                } else {
+                    T::Bang
+                };
+                self.add_token(token, ())
+            }
+            '=' => {
+                let token = if self.match_char('=') {
+                    T::EqualEqual
+                } else {
+                    T::Equal
+                };
+                self.add_token(token, ())
+            }
+            '<' => {
+                let token = if self.match_char('=') {
+                    T::LessEqual
+                } else {
+                    T::Less
+                };
+                self.add_token(token, ())
+            }
+            '>' => {
+                let token = if self.match_char('=') {
+                    T::GreaterEqual
+                } else {
+                    T::Greater
+                };
+                self.add_token(token, ())
+            }
             _ => error(self.line, "Unexpected character.".into()),
         }
     }
@@ -69,5 +101,16 @@ impl Scanner {
             literal,
             line: self.line,
         })
+    }
+
+    fn match_char(&mut self, expected: char) -> bool {
+        if self.is_at_end() {
+            return false;
+        }
+        if self.source.chars().nth(self.current).unwrap() != expected {
+            return false;
+        }
+        self.current += 1;
+        true
     }
 }
