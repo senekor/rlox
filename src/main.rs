@@ -1,6 +1,10 @@
 use std::io::Write;
 
-use rlox::scanner::Scanner;
+use crate::scanner::Scanner;
+
+pub mod scanner;
+pub mod token;
+pub mod token_type;
 
 fn main() {
     let args: Vec<_> = std::env::args().skip(1).collect();

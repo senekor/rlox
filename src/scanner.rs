@@ -1,4 +1,4 @@
-use crate::{token::Token, token_type::TokenType as T};
+use crate::{error, token::Token, token_type::TokenType as T};
 
 pub struct Scanner {
     source: String,
@@ -47,7 +47,7 @@ impl Scanner {
             '+' => self.add_token(T::Plus, ()),
             ';' => self.add_token(T::Semicolon, ()),
             '*' => self.add_token(T::Star, ()),
-            _ => todo!(),
+            _ => error(self.line, "Unexpected character.".into()),
         }
     }
 
