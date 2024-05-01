@@ -79,6 +79,18 @@ impl Scanner {
                 };
                 self.add_token(token, ())
             }
+            '/' => {
+                if self.match_char('/') {
+                    // A comment goes until the end of the line.
+                    while self.peek() != '\n' && !self.is_at_end() {
+                        self.advance();
+                    }
+                } else {
+                    self.add_token(T::Slash, ());
+                }
+            }
+            ' ' | '\r' | '\t' => {}
+            '\n' => self.line += 1,
             _ => error(self.line, "Unexpected character.".into()),
         }
     }
@@ -112,5 +124,12 @@ impl Scanner {
         }
         self.current += 1;
         true
+    }
+
+    fn peek(&self) -> char {
+        if self.is_at_end() {
+            return '\0';
+        }
+        self.source.chars().nth(self.current).unwrap()
     }
 }
