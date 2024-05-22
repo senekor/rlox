@@ -1,7 +1,28 @@
+use phf::phf_map;
+
 use crate::{
     error,
     token::{Literal, Token},
     token_type::TokenType as T,
+};
+
+static KEYWORDS: phf::Map<&str, T> = phf_map! {
+    "and"    => T::And,
+    "class"  => T::Class,
+    "else"   => T::Else,
+    "false"  => T::False,
+    "for"    => T::For,
+    "fun"    => T::Fun,
+    "if"     => T::If,
+    "nil"    => T::Nil,
+    "or"     => T::Or,
+    "print"  => T::Print,
+    "return" => T::Return,
+    "super"  => T::Super,
+    "this"   => T::This,
+    "true"   => T::True,
+    "var"    => T::Var,
+    "while"  => T::While,
 };
 
 pub struct Scanner {
@@ -97,6 +118,7 @@ impl Scanner {
             '\n' => self.line += 1,
             '"' => self.string(),
             c if c.is_ascii_digit() => self.number(),
+            c if is_alpha(c) => self.identifier(),
             _ => error(self.line, "Unexpected character.".into()),
         }
     }
@@ -191,4 +213,24 @@ impl Scanner {
             .into();
         self.add_token(T::Number, Some(value));
     }
+
+    fn identifier(&mut self) {
+        while is_alphanum(self.peek()) {
+            self.advance();
+        }
+        let text: &str = self.source.get(self.start..self.current).unwrap();
+        if let Some(t) = KEYWORDS.get(text) {
+            self.add_token(*t, None);
+        } else {
+            self.add_token(T::Identifier, None);
+        }
+    }
+}
+
+fn is_alpha(c: char) -> bool {
+    c.is_ascii_alphabetic() || c == '_'
+}
+
+fn is_alphanum(c: char) -> bool {
+    is_alpha(c) || c.is_ascii_digit()
 }
