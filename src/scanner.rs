@@ -1,4 +1,8 @@
-use crate::{error, token::Token, token_type::TokenType as T};
+use crate::{
+    error,
+    token::{Literal, Token},
+    token_type::TokenType as T,
+};
 
 pub struct Scanner {
     source: String,
@@ -92,6 +96,7 @@ impl Scanner {
             ' ' | '\r' | '\t' => {}
             '\n' => self.line += 1,
             '"' => self.string(),
+            c if c.is_ascii_digit() => self.number(),
             _ => error(self.line, "Unexpected character.".into()),
         }
     }
@@ -106,7 +111,7 @@ impl Scanner {
         res
     }
 
-    fn add_token(&mut self, token_type: T, literal: Option<String>) {
+    fn add_token(&mut self, token_type: T, literal: Option<Literal>) {
         let text: String = self.source[self.start..self.current].into();
         self.tokens.push(Token {
             token_type,
@@ -134,6 +139,13 @@ impl Scanner {
         self.source.chars().nth(self.current).unwrap()
     }
 
+    fn peek_next(&self) -> char {
+        if self.current + 1 >= self.source.len() {
+            return '\0';
+        }
+        self.source.chars().nth(self.current + 1).unwrap()
+    }
+
     fn string(&mut self) {
         while self.peek() != '"' && !self.is_at_end() {
             if self.peek() == '\n' {
@@ -153,5 +165,30 @@ impl Scanner {
         // Trim the surrounding quotes.
         let value = self.source[self.start + 1..self.current - 1].into();
         self.add_token(T::String, Some(value));
+    }
+
+    fn number(&mut self) {
+        while self.peek().is_ascii_digit() {
+            self.advance();
+        }
+
+        // Look for a fractional part.
+        if self.peek() == '.' && self.peek_next().is_ascii_digit() {
+            // Consume the "."
+            self.advance();
+
+            while self.peek().is_ascii_digit() {
+                self.advance();
+            }
+        }
+
+        let value = self
+            .source
+            .get(self.start..self.current)
+            .unwrap()
+            .parse::<f64>()
+            .unwrap()
+            .into();
+        self.add_token(T::Number, Some(value));
     }
 }
